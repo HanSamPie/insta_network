@@ -15,7 +15,14 @@ print("Succesful Login!\n")
 print("Loading User Names....")
 with open("./form_responses.csv") as file:
     data = list(csv.DictReader(file))
-print(f"Loaded {len(data)} Usernames")
+print(f"Loaded {len(data)} Usernames\n")
+
+print("------------------------------")
+# TODO Filter for accounts I dont follow
+print("Private Accounts:")
+private_accs = [ row["Instagram Username"] for row in data if row["Der angegeben Account ist Privat"] == "TRUE"]
+for acc in private_accs: print(acc)
+print("------------------------------")
 
 #profiles = set(re.split(r"\s+", text.strip()))
 profiles = [ row["Instagram Username"] for row in data ]
