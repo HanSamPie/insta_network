@@ -17,20 +17,30 @@ with open("./form_responses.csv") as file:
     data = list(csv.DictReader(file))
 print(f"Loaded {len(data)} Usernames\n")
 
+
+
 print("------------------------------")
-# TODO Filter for accounts I dont follow
-print("Private Accounts:")
+print("Unfollowed Private Accounts:")
+my_profile = instaloader.Profile.from_username(loader.context, user)
+my_follows = [ profile.username for profile in my_profile.get_followees()]
 private_accs = [ row["Instagram Username"] for row in data if row["Der angegeben Account ist Privat"] == "TRUE"]
-for acc in private_accs: print(acc)
+unfollowed = set(my_follows) - set(private_accs)
+for acc in unfollowed: print(acc)
 print("------------------------------")
 
-#profiles = set(re.split(r"\s+", text.strip()))
-profiles = [ row["Instagram Username"] for row in data ]
+profiles = set([ row["Instagram Username"] for row in data ])
+troll = []
 
 for user in profiles:
-    profile = instaloader.Profile.from_username(loader.context, user)
-    print("Follwers: ",profile.followers)
+    try:
+        profile = instaloader.Profile.from_username(loader.context, user)
+        
+        if profile.followers >= 5000: 
+            troll.append(user) 
+            continue
 
-    followers = profile.get_followers()
-    for f in followers: print(f.username)
+        followers = profile.get_followers()
+        for f in followers: print(f.username)
+    except instaloader.exceptions.ProfileNotExistsException:
+        troll.append(user)
 

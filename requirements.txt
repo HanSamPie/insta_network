@@ -1,2 +1,7 @@
 instaloader
 browser-cookie3 #needed for instaloader
+gspread 
+pandas 
+google-auth
+
+selenium
