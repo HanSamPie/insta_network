@@ -18,20 +18,26 @@ with open("./form_responses.csv") as file:
 print(f"Loaded {len(data)} Usernames\n")
 
 
-
 print("------------------------------")
 print("Unfollowed Private Accounts:")
-my_profile = instaloader.Profile.from_username(loader.context, user)
-my_follows = [ profile.username for profile in my_profile.get_followees()]
+with open("./my_follows.csv") as file:
+    follows = list(csv.DictReader(file))
+my_follows = [ row["Instagram Username"] for row in follows ]
+
 private_accs = [ row["Instagram Username"] for row in data if row["Der angegeben Account ist Privat"] == "TRUE"]
-unfollowed = set(my_follows) - set(private_accs)
+unfollowed = []
+for account in private_accs:
+    if account not in my_follows:
+        unfollowed.append(account)
 for acc in unfollowed: print(acc)
 print("------------------------------")
 
 profiles = set([ row["Instagram Username"] for row in data ])
 troll = []
 
-for user in profiles:
+for profile in profiles:
+    if profile in unfollowed and profile != user:
+        continue
     try:
         profile = instaloader.Profile.from_username(loader.context, user)
         

@@ -2,6 +2,10 @@ import gspread
 from google.oauth2.service_account import Credentials
 import pandas as pd
 
+import pandas
+import os
+import instaloader
+
 # Path to your JSON key file
 SERVICE_ACCOUNT_FILE = "service_account_key.json"
 
@@ -24,3 +28,17 @@ df = pd.DataFrame(data)
 df.to_csv("form_responses.csv", index=False)
 
 print("Downloaded latest form responses.")
+
+loader = instaloader.Instaloader()
+
+user = os.getenv("INSTA_USER")
+
+print("Attempting login....")
+loader.load_session_from_file(user.lower())
+print("Succesful Login!\n")
+
+my_profile = instaloader.Profile.from_username(loader.context, user)
+print("Getting Follows....")
+my_follows = [ profile.username for profile in my_profile.get_followees()]
+df = pd.DataFrame(my_follows, columns=["Instagram Username"])
+df.to_csv("my_follows.csv", index=False)
