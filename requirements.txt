@@ -1,8 +1,11 @@
 instaloader
 browser-cookie3 #needed for instaloader
-gspread 
+
 pandas 
+gspread 
 google-auth
+google-cloud-storage
 
 selenium
 webdriver-manager
+selenium-stealth
