@@ -7,7 +7,7 @@ import os
 import instaloader
 
 # Path to your JSON key file
-SERVICE_ACCOUNT_FILE = "service_account_key.json"
+SERVICE_ACCOUNT_FILE = "service_account_sheet_key.json"
 
 # Authenticate and connect to Google Sheets
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
