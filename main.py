@@ -9,8 +9,8 @@ from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 from humancursor import WebCursor
-from human_typer import Human_typer
-
+# from https://github.com/saadejazz/humanTyper
+from packages.typer import Typer
 from selenium_stealth import stealth
 
 # Set Chrome options
@@ -35,22 +35,27 @@ stealth(driver,
 # Open website
 driver.get("https://www.instagram.com")
 
+cursor = WebCursor(driver)
+ty = Typer(accuracy = 0.90, correction_chance = 0.70, typing_delay = (0.06, 0.09), distance = 2)
 
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Search')]"))
 )
 
 search_element = driver.find_element(By.XPATH, "//span[contains(text(), 'Search')]")
-print(search_element.location)
-search_element.click()
+x = search_element.location["x"]
+y = search_element.location["y"]
+
+
+cursor.click_on(search_element)
+
 
 WebDriverWait(driver, 2).until(
     EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Search input']"))
 )
 
 search_input_element = driver.find_element(By.XPATH, "//input[@aria-label='Search input']")
-search_input_element.send_keys("asdf")
+ty.send(search_input_element, "ich liebe sie")
 
-print("clicked?")
 sleep(50)
 driver.quit()
