@@ -7,6 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.common.exceptions import NoSuchElementException
 
 from humancursor import WebCursor
 # from https://github.com/saadejazz/humanTyper
@@ -53,9 +54,46 @@ cursor.click_on(search_element)
 WebDriverWait(driver, 2).until(
     EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Search input']"))
 )
-
 search_input_element = driver.find_element(By.XPATH, "//input[@aria-label='Search input']")
-ty.send(search_input_element, "ich liebe sie")
+ty.send(search_input_element, "@hansampie")
+sleep(1)
 
-sleep(50)
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'hansampie')]"))
+)
+profile_element = driver.find_element(By.XPATH, "//span[contains(text(), 'hansampie')]")
+cursor.click_on(profile_element)
+sleep(1)
+
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'followers')]"))
+)
+followers_element = driver.find_element(By.XPATH, "//span[contains(text(), 'followers')]")
+cursor.click_on(followers_element)
+sleep(1)
+
+try:
+    while True:
+        scrollbar = driver.find_element(By.XPATH, "//div[@data-visualcompletion='loading-state']")
+        cursor.scroll_into_view_of_element(scrollbar)
+        sleep(0.2)
+except NoSuchElementException:
+    
+    pass
+# cursor.control_scroll_bar(scrollbar, 1)
+
+dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
+text = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
+text = text[1:]
+names = []
+
+# TODO some people dont have name so I have to find the tag
+for i, t in enumerate(text): 
+    if i%2 == 0:
+        names.append(t.text)
+        print(t.text)
+print(len(names))
+
+
+sleep(30)
 driver.quit()
