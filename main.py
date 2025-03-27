@@ -1,8 +1,15 @@
 from time import sleep
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
+
+from humancursor import WebCursor
+from human_typer import Human_typer
 
 from selenium_stealth import stealth
 
@@ -28,5 +35,22 @@ stealth(driver,
 # Open website
 driver.get("https://www.instagram.com")
 
-sleep(30)
+
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Search')]"))
+)
+
+search_element = driver.find_element(By.XPATH, "//span[contains(text(), 'Search')]")
+print(search_element.location)
+search_element.click()
+
+WebDriverWait(driver, 2).until(
+    EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Search input']"))
+)
+
+search_input_element = driver.find_element(By.XPATH, "//input[@aria-label='Search input']")
+search_input_element.send_keys("asdf")
+
+print("clicked?")
+sleep(50)
 driver.quit()

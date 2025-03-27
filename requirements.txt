@@ -1,5 +1,5 @@
 instaloader
-browser-cookie3 #needed for instaloader
+browser-cookie3
 
 pandas 
 gspread 
@@ -9,3 +9,5 @@ google-cloud-storage
 selenium
 webdriver-manager
 selenium-stealth
+HumanCursor
+human_typer
