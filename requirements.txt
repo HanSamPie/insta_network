@@ -12,3 +12,4 @@ selenium-stealth
 HumanCursor
 human_typer
 scipy
+neo4j
