@@ -11,3 +11,4 @@ webdriver-manager
 selenium-stealth
 HumanCursor
 human_typer
+scipy
