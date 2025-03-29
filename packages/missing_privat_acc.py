@@ -32,21 +32,20 @@ for account in private_accs:
 for acc in unfollowed: print(acc)
 print("------------------------------")
 
-profiles = set([ row["Instagram Username"] for row in data ])
-troll = []
+# profiles = set([ row["Instagram Username"] for row in data ])
+# troll = []
 
-for profile in profiles:
-    if profile in unfollowed and profile != user:
-        continue
-    try:
-        profile = instaloader.Profile.from_username(loader.context, user)
+# for profile in profiles:
+#     if profile in unfollowed and profile != user:
+#         continue
+#     try:
+#         profile = instaloader.Profile.from_username(loader.context, user)
         
-        if profile.followers >= 5000: 
-            troll.append(user) 
-            continue
+#         if profile.followers >= 5000: 
+#             troll.append(user) 
+#             continue
 
-        followers = profile.get_followers()
-        for f in followers: print(f.username)
-    except instaloader.exceptions.ProfileNotExistsException:
-        troll.append(user)
-
+#         followers = profile.get_followers()
+#         for f in followers: print(f.username)
+#     except instaloader.exceptions.ProfileNotExistsException:
+#         troll.append(user)
