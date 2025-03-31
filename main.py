@@ -101,8 +101,8 @@ except NoSuchElementException:
     pass
 
 dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
-# text = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
-# text = text[1:]
+# username_elements = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
+# username_elements = text[1:]
 username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
 followers = [ element.text for element in username_elements]
 
@@ -127,8 +127,8 @@ except NoSuchElementException:
     pass
 
 dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
-# text = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
-# text = text[1:]
+# username_elements = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
+# username_elements = text[1:]
 username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
 following = [ element.text for element in username_elements]
 
