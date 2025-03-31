@@ -79,6 +79,9 @@ WebDriverWait(driver, 5).until(
 )
 following_count = driver.find_element(By.XPATH, '//a[@href="/hansampie/following/"').text
 
+if followers_count > 2000 or following_count > 2000:
+    pass
+
 
 ##################FOLLOWERS########################
 # TODO Test
@@ -137,12 +140,13 @@ close_button_element = dialog.find_element(By.XPATH, "//title[contains(text(), '
 #     print(u)
 print("Followers: " + len(followers))
 print(followers_count)
+if len (followers) != followers_count: print("fuck")
 print("---------------------------------------------------")
 # for u in following: 
 #     print(u)
 print("Following: " + len(following))
 print(following_count)
-
+if len (following) != following_count: print("fuck")
 
 sleep(30)
 driver.quit()
