@@ -1,3 +1,4 @@
+from pprint import pprint
 from time import sleep
 import random
 from selenium import webdriver
@@ -117,6 +118,6 @@ def scrape_profile(username: str) -> dict:
     
     return profile
     
-print(scrape_profile("hansampie"))
+pprint(scrape_profile("hansampie"))
 
 driver.quit()
