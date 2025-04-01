@@ -70,14 +70,14 @@ sleep(1)
 ##################FOLLOW COUNTS########################
 # TODO Test
 WebDriverWait(driver, 5).until(
-    EC.presence_of_element_located((By.XPATH, '//a[@href="/hansampie/followers/"'))
+    EC.presence_of_element_located((By.XPATH, '//ul/li[2]/div/a/span/span/span'))
 )
-followers_count = driver.find_element(By.XPATH, '//a[@href="/hansampie/followers/"').text
+followers_count = int(driver.find_element(By.XPATH, '//ul/li[2]/div/a/span/span/span').text)
 
 WebDriverWait(driver, 5).until(
-    EC.presence_of_element_located((By.XPATH, '//a[@href="/hansampie/following/"'))
+    EC.presence_of_element_located((By.XPATH, '//ul/li[3]/div/a/span/span/span'))
 )
-following_count = driver.find_element(By.XPATH, '//a[@href="/hansampie/following/"').text
+following_count = int(driver.find_element(By.XPATH, '//ul/li[3]/div/a/span/span/span').text)
 
 if followers_count > 2000 or following_count > 2000:
     pass
@@ -106,8 +106,8 @@ dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
 username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
 followers = [ element.text for element in username_elements]
 
-close_button_element = dialog.find_element(By.XPATH, "//title[contains(text(), 'Close')]")
-
+close_button_element = dialog.find_element(By.XPATH, "//button[contains(@class, '_abl-')]")
+cursor.click_on(close_button_element)
 
 ##################FOLLOWING#######################
 # TODO Test
@@ -132,19 +132,19 @@ dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
 username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
 following = [ element.text for element in username_elements]
 
-close_button_element = dialog.find_element(By.XPATH, "//title[contains(text(), 'Close')]")
-
+close_button_element = dialog.find_element(By.XPATH, "//button[contains(@class, '_abl-')]")
+cursor.click_on(close_button_element)
 
 ##################DEBUG#######################
 # for u in followers: 
 #     print(u)
-print("Followers: " + len(followers))
+print("Followers: " + str(len(followers)))
 print(followers_count)
 if len (followers) != followers_count: print("fuck")
 print("---------------------------------------------------")
 # for u in following: 
 #     print(u)
-print("Following: " + len(following))
+print("Following: " + str(len(following)))
 print(following_count)
 if len (following) != following_count: print("fuck")
 
