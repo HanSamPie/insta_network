@@ -39,6 +39,8 @@ driver.get("https://www.instagram.com")
 cursor = WebCursor(driver)
 ty = Typer(accuracy = 0.90, correction_chance = 0.70, typing_delay = (0.06, 0.09), distance = 2)
 
+
+##################SEARCH########################
 WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'Search')]"))
 )
@@ -46,7 +48,6 @@ WebDriverWait(driver, 10).until(
 search_element = driver.find_element(By.XPATH, "//span[contains(text(), 'Search')]")
 x = search_element.location["x"]
 y = search_element.location["y"]
-
 
 cursor.click_on(search_element)
 
@@ -65,6 +66,25 @@ profile_element = driver.find_element(By.XPATH, "//span[contains(text(), 'hansam
 cursor.click_on(profile_element)
 sleep(1)
 
+
+##################FOLLOW COUNTS########################
+# TODO Test
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.XPATH, '//a[@href="/hansampie/followers/"'))
+)
+followers_count = driver.find_element(By.XPATH, '//a[@href="/hansampie/followers/"').text
+
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.XPATH, '//a[@href="/hansampie/following/"'))
+)
+following_count = driver.find_element(By.XPATH, '//a[@href="/hansampie/following/"').text
+
+if followers_count > 2000 or following_count > 2000:
+    pass
+
+
+##################FOLLOWERS########################
+# TODO Test
 WebDriverWait(driver, 5).until(
     EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'followers')]"))
 )
@@ -78,22 +98,55 @@ try:
         cursor.scroll_into_view_of_element(scrollbar)
         sleep(0.2)
 except NoSuchElementException:
-    
     pass
-# cursor.control_scroll_bar(scrollbar, 1)
 
 dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
-text = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
-text = text[1:]
-names = []
+# username_elements = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
+# username_elements = text[1:]
+username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
+followers = [ element.text for element in username_elements]
 
-# TODO some people dont have name so I have to find the tag
-for i, t in enumerate(text): 
-    if i%2 == 0:
-        names.append(t.text)
-        print(t.text)
-print(len(names))
+close_button_element = dialog.find_element(By.XPATH, "//title[contains(text(), 'Close')]")
 
+
+##################FOLLOWING#######################
+# TODO Test
+WebDriverWait(driver, 5).until(
+    EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'following')]"))
+)
+following_element = driver.find_element(By.XPATH, "//span[contains(text(), 'following')]")
+cursor.click_on(following_element)
+sleep(1)
+
+try:
+    while True:
+        scrollbar = driver.find_element(By.XPATH, "//div[@data-visualcompletion='loading-state']")
+        cursor.scroll_into_view_of_element(scrollbar)
+        sleep(0.2)
+except NoSuchElementException:
+    pass
+
+dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
+# username_elements = dialog.find_elements(By.XPATH, ".//span[string-length(text()) > 0]")
+# username_elements = text[1:]
+username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
+following = [ element.text for element in username_elements]
+
+close_button_element = dialog.find_element(By.XPATH, "//title[contains(text(), 'Close')]")
+
+
+##################DEBUG#######################
+# for u in followers: 
+#     print(u)
+print("Followers: " + len(followers))
+print(followers_count)
+if len (followers) != followers_count: print("fuck")
+print("---------------------------------------------------")
+# for u in following: 
+#     print(u)
+print("Following: " + len(following))
+print(following_count)
+if len (following) != following_count: print("fuck")
 
 sleep(30)
 driver.quit()
