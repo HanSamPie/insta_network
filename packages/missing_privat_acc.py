@@ -4,13 +4,13 @@ import instaloader
 
 loader = instaloader.Instaloader()
 
-user = os.getenv("INSTA_USER")
+# user = os.getenv("INSTA_USER")
 # password = os.getenv("INSTA_PASSWORD")
 # print(f"Username is:{user}      Password is: {'*' * len(password)}")
 
-print("Attempting login....")
-loader.load_session_from_file(user.lower())
-print("Succesful Login!\n")
+# print("Attempting login....")
+# loader.load_session_from_file(user.lower())
+# print("Succesful Login!\n")
 
 print("Loading User Names....")
 with open("./form_responses.csv") as file:
