@@ -15,6 +15,8 @@ from humancursor import WebCursor
 from packages.typer import Typer
 from selenium_stealth import stealth
 
+from neo4j import GraphDatabase
+
 
 # Set Chrome options
 options = Options()
@@ -117,7 +119,63 @@ def scrape_profile(username: str) -> dict:
         raise ValueError("Follow count mismatch!")
     
     return profile
-    
-pprint(scrape_profile("hansampie"))
 
+#######################DB#####################
+def insert_profile(profile:dict):
+    def insert_user(tx, username, followers, following, followers_count, following_count):
+        # Create or update the user node with counts
+        tx.run(
+            """
+            MERGE (u:Account {username: $username})
+            SET u.followers_count = $followers_count, 
+                u.following_count = $following_count
+            """,
+            username=username,
+            followers_count=followers_count,
+            following_count=following_count,
+        )
+
+        # Create relationships for followers (follower -> u)
+        for follower in followers:
+            tx.run(
+                """
+                MATCH (u:Account {username: $username})
+                MERGE (f:Account {username: $follower})
+                MERGE (f)-[:FOLLOWS]->(u)
+                """,
+                follower=follower,
+                username=username,
+            )
+
+        # Create relationships for following (u -> following_user)
+        for following_user in following:
+            tx.run(
+                """
+                MATCH (u:Account {username: $username})
+                MERGE (f:Account {username: $following_user})
+                MERGE (u)-[:FOLLOWS]->(f)
+                """,
+                following_user=following_user,
+                username=username,
+            )
+
+    with db_driver.session() as session:
+        session.execute_write(
+            insert_user, 
+            profile["username"], 
+            profile["followers"], 
+            profile["following"], 
+            profile["followers_count"], 
+            profile["following_count"]
+        )
+
+URI = "bolt://localhost:7687"
+AUTH = ("neo4j", "password")
+# Connect and insert data
+db_driver = GraphDatabase.driver(URI, auth=AUTH)
+
+insert_profile(scrape_profile("hansampie"))
+#pprint(scrape_profile("hansampie"))
+
+db_driver.close()
 driver.quit()
