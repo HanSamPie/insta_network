@@ -14,7 +14,8 @@ def create_table():
     create_table_query = """
     CREATE TABLE IF NOT EXISTS tasks (
         name TEXT PRIMARY KEY,
-        status TEXT CHECK (status IN ('DONE', 'TODO', 'ONGOING'))
+        status TEXT CHECK (status IN ('DONE', 'TODO', 'ONGOING')),
+        depth INT NOT NULL
     );
     """
 
