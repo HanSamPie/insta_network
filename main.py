@@ -276,7 +276,10 @@ with tqdm(total=num_todo, desc="Scraping Profiles") as pbar:
         start_time = time()
         
         if depth <= MAX_DEPTH:
-            profile = scrape_profile(username)
+            try:
+                profile = scrape_profile(username)
+            except Exception as e:
+                update_status(username, "TODO")
             insert_profile(profile)
 
             for follower in profile['followers']:
