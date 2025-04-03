@@ -274,19 +274,21 @@ with tqdm(total=num_todo, desc="Scraping Profiles") as pbar:
     while (result := update_one_todo_to_ongoing()) is not None:
         username, depth = result
         start_time = time()
-        
-        if depth <= MAX_DEPTH:
-            try:
+        try:
+            if depth <= MAX_DEPTH:
+                
                 profile = scrape_profile(username)
-            except Exception as e:
-                update_status(username, "TODO")
-            insert_profile(profile)
+                
+                insert_profile(profile)
 
-            for follower in profile['followers']:
-                add_user(follower, "TODO", depth + 1)
-            for follows in profile['following']:
-                add_user(follows, "TODO", depth + 1)
-    
+                for follower in profile['followers']:
+                    add_user(follower, "TODO", depth + 1)
+                for follows in profile['following']:
+                    add_user(follows, "TODO", depth + 1)
+
+        except Exception as e:
+                update_status(username, "TODO")
+
         update_status(username, "DONE")
 
         time_since = time() - start_time
