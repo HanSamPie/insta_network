@@ -54,8 +54,8 @@ def search_profile(username: str):
     ty.send(search_input_element, f"@{username}")
     sleep(random.uniform(0.5, 1))
 
-    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[contains(text(), 'hansampie')]")))
-    profile_element = driver.find_element(By.XPATH, "//span[contains(text(), 'hansampie')]")
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, f"//span[contains(text(), '{username}')]")))
+    profile_element = driver.find_element(By.XPATH, f"//span[contains(text(), '{username}')]")
     cursor.click_on(profile_element)
     sleep(random.uniform(0.5, 1))
 
@@ -65,10 +65,10 @@ def get_follow_count() -> tuple[int, int]:
     returns first the followers count and second the following count
     """
 
-    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//ul/li[2]/div/a/span/span/span')))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[2]/div/a/span/span/span')))
     followers_count = driver.find_element(By.XPATH, '//ul/li[2]/div/a/span/span/span').text
 
-    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//ul/li[3]/div/a/span/span/span')))
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[3]/div/a/span/span/span')))
     following_count = driver.find_element(By.XPATH, '//ul/li[3]/div/a/span/span/span').text
 
     return int(followers_count), int(following_count)
@@ -83,7 +83,7 @@ def get_usernames(followers=False, following=False) -> list[str]:
 
     try:
         while True:
-            WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.XPATH, "//div[@data-visualcompletion='loading-state']")))
+            WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//div[@data-visualcompletion='loading-state']")))
             scrollbar = driver.find_element(By.XPATH, "//div[@data-visualcompletion='loading-state']")
             cursor.scroll_into_view_of_element(scrollbar)
             sleep(random.uniform(0.1, 0.3))
