@@ -107,10 +107,16 @@ def scrape_profile(username: str) -> dict:
     search_profile(username)
     profile['followers_count'], profile['following_count'] = get_follow_count()
     if profile['followers_count'] > 2000 or profile['following_count'] > 2000:
+        profile['followers'] = []
+        profile['following'] = []
         return profile
 
-    profile['followers'] = get_usernames(followers=True)
-    profile['following'] = get_usernames(following=True)
+    if profile['followers_count'] == 0 and profile['following_count'] == 0:
+        profile['followers'] = []
+        profile['following'] = []
+    else:
+        profile['followers'] = get_usernames(followers=True)
+        profile['following'] = get_usernames(following=True)
 
     followers_not_equal = len(profile['followers']) != profile['followers_count']
     following_not_equal =  len(profile['following']) != profile['following_count']
