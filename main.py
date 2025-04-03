@@ -1,4 +1,5 @@
 from pprint import pprint
+import sys
 from time import sleep, time
 import random
 from selenium import webdriver
@@ -287,7 +288,9 @@ with tqdm(total=num_todo, desc="Scraping Profiles") as pbar:
                     add_user(follows, "TODO", depth + 1)
 
         except Exception as e:
-                update_status(username, "TODO")
+            update_status(username, "TODO")
+            print(str(e))
+            sys.exit("Exiting the program due to the error.")
 
         update_status(username, "DONE")
 
