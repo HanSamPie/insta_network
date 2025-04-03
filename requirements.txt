@@ -14,3 +14,4 @@ human_typer
 scipy
 
 neo4j
+psycopg2-binary

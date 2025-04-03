@@ -16,7 +16,7 @@ from packages.typer import Typer
 from selenium_stealth import stealth
 
 from neo4j import GraphDatabase
-
+import psycopg2
 
 # Set Chrome options
 options = Options()
@@ -120,7 +120,7 @@ def scrape_profile(username: str) -> dict:
     
     return profile
 
-#######################DB#####################
+#######################NEO4J#####################
 def insert_profile(profile:dict):
     def insert_user(tx, username, followers, following, followers_count, following_count):
         # Create or update the user node with counts
@@ -159,7 +159,7 @@ def insert_profile(profile:dict):
                 username=username,
             )
 
-    with db_driver.session() as session:
+    with neo4j_driver.session() as session:
         session.execute_write(
             insert_user, 
             profile["username"], 
@@ -172,10 +172,66 @@ def insert_profile(profile:dict):
 URI = "bolt://localhost:7687"
 AUTH = ("neo4j", "password")
 # Connect and insert data
-db_driver = GraphDatabase.driver(URI, auth=AUTH)
+neo4j_driver = GraphDatabase.driver(URI, auth=AUTH)
+
+
+#######################POSTGRES#####################
+postgres_conn = psycopg2.connect(
+    dbname="postgres",
+    user="postgres",
+    password="password",
+    host="localhost",
+    port="5432"
+)
+postgres_cursor = postgres_conn.cursor()
+
+def add_item(name: str, status: str):
+    """Inserts an item if it does not already exist."""
+    query = """
+    INSERT INTO tasks (name, status) VALUES (%s, %s)
+    ON CONFLICT (name) DO NOTHING;
+    """
+    
+    
+    postgres_cursor.execute(query, (name, status))
+    postgres_conn.commit()
+
+
+def update_status(name: str, new_status: str):
+    """Updates the status of an item if it exists."""
+    query = """
+    UPDATE tasks SET status = %s WHERE name = %s;
+    """
+    
+    postgres_cursor.execute(query, (new_status, name))
+    postgres_conn.commit()
+
+
+def update_one_todo_to_ongoing() -> str:
+    """Finds one item with status TODO, updates it to ONGOING, and returns its name."""
+    select_query = "SELECT name FROM tasks WHERE status = 'TODO' LIMIT 1 FOR UPDATE SKIP LOCKED;"
+    update_query = "UPDATE tasks SET status = 'ONGOING' WHERE name = %s RETURNING name;"
+    # Fetch one TODO item
+    postgres_cursor.execute(select_query)
+    result = postgres_cursor.fetchone()
+
+    if result:
+        name = result[0]
+
+        # Update its status to ONGOING
+        postgres_cursor.execute(update_query, (name,))
+        postgres_conn.commit()
+
+        return name  # Return the updated item's name
+    else:
+        return None  # No TODO items found
+
+
 
 insert_profile(scrape_profile("hansampie"))
 #pprint(scrape_profile("hansampie"))
 
-db_driver.close()
+neo4j_driver.close()
+postgres_cursor.close()
+postgres_conn.close()
 driver.quit()
