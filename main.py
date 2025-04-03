@@ -185,17 +185,19 @@ postgres_conn = psycopg2.connect(
 )
 postgres_cursor = postgres_conn.cursor()
 
-def add_user(name: str, status: str):
-    """Inserts an item if it does not already exist."""
+MAX_DEPTH =  1 # only queries to follows of my follows
+
+def add_user(name: str, status: str, depth: int):
+    """Add a new task with a specified depth."""
     query = """
-    INSERT INTO tasks (name, status) VALUES (%s, %s)
+    INSERT INTO tasks (name, status, depth)
+    VALUES (%s, %s, %s)
     ON CONFLICT (name) DO NOTHING;
     """
-    
-    
-    postgres_cursor.execute(query, (name, status))
-    postgres_conn.commit()
 
+
+    postgres_cursor.execute(query, (name, status, depth))
+    postgres_conn.commit()
 
 def update_status(name: str, new_status: str):
     """Updates the status of an item if it exists."""
@@ -207,24 +209,31 @@ def update_status(name: str, new_status: str):
     postgres_conn.commit()
 
 
-def update_one_todo_to_ongoing() -> str:
-    """Finds one item with status TODO, updates it to ONGOING, and returns its name."""
-    select_query = "SELECT name FROM tasks WHERE status = 'TODO' LIMIT 1 FOR UPDATE SKIP LOCKED;"
-    update_query = "UPDATE tasks SET status = 'ONGOING' WHERE name = %s RETURNING name;"
+def update_one_todo_to_ongoing() -> tuple:
+    """Finds one item with status TODO, updates it to ONGOING, and returns its name and depth."""
+    # Query to fetch one TODO item, along with its depth
+    select_query = """
+    SELECT name, depth FROM tasks WHERE status = 'TODO' AND depth <= %s
+    ORDER BY depth LIMIT 1 FOR UPDATE SKIP LOCKED;
+    """
+    
+    # Query to update the task's status
+    update_query = "UPDATE tasks SET status = 'ONGOING' WHERE name = %s RETURNING name, depth;"
+    
     # Fetch one TODO item
-    postgres_cursor.execute(select_query)
+    postgres_cursor.execute(select_query, (MAX_DEPTH,))
     result = postgres_cursor.fetchone()
 
     if result:
-        name = result[0]
+        name, depth = result  # Extract name and depth
 
         # Update its status to ONGOING
         postgres_cursor.execute(update_query, (name,))
         postgres_conn.commit()
 
-        return name  # Return the updated item's name
+        return name, depth  # Return the updated item's name and depth
     else:
-        return None  # No TODO items found
+        return None  # No TODO items found or MAX_DEPTH reached
 
 
 def count_todo_items() -> int:
@@ -236,32 +245,7 @@ def count_todo_items() -> int:
     count = postgres_cursor.fetchone()[0]  # Get the first column from the result
     return count
 
-
-num_done = 0
-num_todo = 0
-average = 0
-
-# TODO this would never stop
-while (username := update_one_todo_to_ongoing()) is not None:
-    start_time = time()
-    profile = scrape_profile(username)
-    insert_profile(profile)
-
-    for follower in profile['followers']:
-        add_user(follower, "TODO")
-    for follows in profile['following']:
-        add_user(follows, "TODO")
-    
-    update_status(username, "DONE")
-
-    time_since = time() - start_time
-    num_todo = count_todo_items()
-    average = (average * num_done + time_since) / (num_done + 1)
-    print(f'Number of Profiles Scrapped: {num_done}')
-    print(f'Average Time per Profile is: {average:.0f}s')
-    print(f'Current Percent Done: {(num_done / (num_done + num_todo)) * 100:.2f}%')
-    expected_time = average * num_todo
-
+def format_time(time: int) -> str:
     hours = int(expected_time // 3600)
     minutes = int((expected_time % 3600) // 60)
     seconds = int(expected_time % 60)
@@ -272,7 +256,35 @@ while (username := update_one_todo_to_ongoing()) is not None:
         formatted_time = f"{minutes}m {seconds}s"
     else:
         formatted_time = f"{seconds}s"
-    print(f'Expected Time Remaining: {formatted_time}')
+
+    return formatted_time
+
+num_done = 0
+num_todo = 0
+average = 0
+
+while (result := update_one_todo_to_ongoing()) is not None:
+    username, depth = result
+
+    start_time = time()
+    if depth <= MAX_DEPTH:
+        profile = scrape_profile(username)
+        insert_profile(profile)
+
+        for follower in profile['followers']:
+            add_user(follower, "TODO", depth + 1)
+        for follows in profile['following']:
+            add_user(follows, "TODO", depth + 1)
+    
+    update_status(username, "DONE")
+
+    time_since = time() - start_time
+    num_todo = count_todo_items()
+    average = (average * num_done + time_since) / (num_done + 1)
+    print(f'Number of Profiles Scrapped: {num_done}')
+    print(f'Average Time per Profile is: {average:.0f}s')
+    print(f'Current Percent Done: {(num_done / (num_done + num_todo)) * 100:.2f}%')
+    print(f'Expected Time Remaining: {format_time(average * num_todo)}')
 
 
 

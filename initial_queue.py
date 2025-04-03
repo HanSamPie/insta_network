@@ -10,16 +10,17 @@ DB_CONFIG = {
     "port": "5432",
 }
 
-def add_item(name: str, status: str):
-    """Inserts an item if it does not already exist."""
+def add_profile_with_depth(name: str, status: str, depth: int):
+    """Add a new task with a specified depth."""
     query = """
-    INSERT INTO tasks (name, status) VALUES (%s, %s)
+    INSERT INTO tasks (name, status, depth)
+    VALUES (%s, %s, %s)
     ON CONFLICT (name) DO NOTHING;
     """
-    
+
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(query, (name, status))
+            cursor.execute(query, (name, status, depth))
             conn.commit()
 
 # BEFORE THIS DELETE ALL TROLL MANUALLY
@@ -29,4 +30,4 @@ with open("./form_responses.csv") as file:
 users = [profile['Instagram Username'] for profile in data]
 
 for user in users:
-    add_item(user, "TODO")
+    add_profile_with_depth(user, "TODO", 0)
