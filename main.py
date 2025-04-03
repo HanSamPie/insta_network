@@ -1,5 +1,5 @@
 from pprint import pprint
-from time import sleep
+from time import sleep, time
 import random
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -115,7 +115,7 @@ def scrape_profile(username: str) -> dict:
     following_not_equal =  len(profile['following']) != profile['following_count']
 
     if followers_not_equal or following_not_equal:
-        print(profile)
+        pprint(profile)
         raise ValueError("Follow count mismatch!")
     
     return profile
@@ -185,7 +185,7 @@ postgres_conn = psycopg2.connect(
 )
 postgres_cursor = postgres_conn.cursor()
 
-def add_item(name: str, status: str):
+def add_user(name: str, status: str):
     """Inserts an item if it does not already exist."""
     query = """
     INSERT INTO tasks (name, status) VALUES (%s, %s)
@@ -227,9 +227,55 @@ def update_one_todo_to_ongoing() -> str:
         return None  # No TODO items found
 
 
+def count_todo_items() -> int:
+    """Returns the total number of TODO items in the database."""
+    query = "SELECT COUNT(*) FROM tasks WHERE status = 'TODO';"
 
-insert_profile(scrape_profile("hansampie"))
-#pprint(scrape_profile("hansampie"))
+
+    postgres_cursor.execute(query)
+    count = postgres_cursor.fetchone()[0]  # Get the first column from the result
+    return count
+
+
+num_done = 0
+num_todo = 0
+average = 0
+
+# TODO this would never stop
+while (username := update_one_todo_to_ongoing()) is not None:
+    start_time = time()
+    profile = scrape_profile(username)
+    insert_profile(profile)
+
+    for follower in profile['followers']:
+        add_user(follower, "TODO")
+    for follows in profile['following']:
+        add_user(follows, "TODO")
+    
+    update_status(username, "DONE")
+
+    time_since = time() - start_time
+    num_todo = count_todo_items()
+    average = (average * num_done + time_since) / (num_done + 1)
+    print(f'Number of Profiles Scrapped: {num_done}')
+    print(f'Average Time per Profile is: {average:.0f}s')
+    print(f'Current Percent Done: {(num_done / (num_done + num_todo)) * 100:.2f}%')
+    expected_time = average * num_todo
+
+    hours = int(expected_time // 3600)
+    minutes = int((expected_time % 3600) // 60)
+    seconds = int(expected_time % 60)
+
+    if hours > 0:
+        formatted_time = f"{hours}h {minutes}m {seconds}s"
+    elif minutes > 0:
+        formatted_time = f"{minutes}m {seconds}s"
+    else:
+        formatted_time = f"{seconds}s"
+    print(f'Expected Time Remaining: {formatted_time}')
+
+
+
 
 neo4j_driver.close()
 postgres_cursor.close()
