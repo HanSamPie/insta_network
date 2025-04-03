@@ -8,6 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from tqdm import tqdm
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException
 
@@ -246,9 +247,9 @@ def count_todo_items() -> int:
     return count
 
 def format_time(time: int) -> str:
-    hours = int(expected_time // 3600)
-    minutes = int((expected_time % 3600) // 60)
-    seconds = int(expected_time % 60)
+    hours = int(time // 3600)
+    minutes = int((time % 3600) // 60)
+    seconds = int(time % 60)
 
     if hours > 0:
         formatted_time = f"{hours}h {minutes}m {seconds}s"
@@ -263,30 +264,39 @@ num_done = 0
 num_todo = 0
 average = 0
 
-while (result := update_one_todo_to_ongoing()) is not None:
-    username, depth = result
+with tqdm(total=num_todo, desc="Scraping Profiles") as pbar:
+    while (result := update_one_todo_to_ongoing()) is not None:
+        username, depth = result
+        start_time = time()
+        
+        if depth <= MAX_DEPTH:
+            profile = scrape_profile(username)
+            insert_profile(profile)
 
-    start_time = time()
-    if depth <= MAX_DEPTH:
-        profile = scrape_profile(username)
-        insert_profile(profile)
-
-        for follower in profile['followers']:
-            add_user(follower, "TODO", depth + 1)
-        for follows in profile['following']:
-            add_user(follows, "TODO", depth + 1)
+            for follower in profile['followers']:
+                add_user(follower, "TODO", depth + 1)
+            for follows in profile['following']:
+                add_user(follows, "TODO", depth + 1)
     
-    update_status(username, "DONE")
+        update_status(username, "DONE")
 
-    time_since = time() - start_time
-    num_todo = count_todo_items()
-    average = (average * num_done + time_since) / (num_done + 1)
-    print(f'Number of Profiles Scrapped: {num_done}')
-    print(f'Average Time per Profile is: {average:.0f}s')
-    print(f'Current Percent Done: {(num_done / (num_done + num_todo)) * 100:.2f}%')
-    print(f'Expected Time Remaining: {format_time(average * num_todo)}')
+        time_since = time() - start_time
+        average = (average * num_done + time_since) / (num_done + 1)
+        num_todo = count_todo_items()
+        
+        # Update the progress bar total dynamically
+        pbar.total = num_todo
+        pbar.n = num_done  # Keep track of progress
+        pbar.last_print_n = num_done  # Update the print position to avoid misalignment
 
-
+        # Update the progress bar and additional stats
+        pbar.set_postfix({
+            'Avg Time (s)': f'{average:.2f}',
+            'Time Left': format_time(average * num_todo),
+        })
+        
+        # Refresh the progress bar display
+        pbar.update(1)
 
 
 neo4j_driver.close()
