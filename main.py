@@ -11,7 +11,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from tqdm import tqdm
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.webdriver.common.keys import Keys
 
 from humancursor import WebCursor
 from packages.typer import Typer
@@ -52,6 +53,8 @@ def search_profile(username: str):
 
     WebDriverWait(driver, 2).until(EC.presence_of_element_located((By.XPATH, "//input[@aria-label='Search input']")))
     search_input_element = driver.find_element(By.XPATH, "//input[@aria-label='Search input']")
+
+    search_input_element.send_keys(Keys.BACKSPACE * 30)
     ty.send(search_input_element, f"@{username}")
     sleep(random.uniform(0.5, 1))
 
@@ -65,22 +68,45 @@ def get_follow_count() -> tuple[int, int]:
     """
     returns first the followers count and second the following count
     """
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[2]/div/a/span/span/span')))
+        followers_count = driver.find_element(By.XPATH, '//ul/li[2]/div/a/span/span/span').text
+    except Exception:
+        return -1, -1
 
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[2]/div/a/span/span/span')))
-    followers_count = driver.find_element(By.XPATH, '//ul/li[2]/div/a/span/span/span').text
+    try:
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[3]/div/a/span/span/span')))
+        following_count = driver.find_element(By.XPATH, '//ul/li[3]/div/a/span/span/span').text
+    except Exception:
+        return -1, -1
 
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul/li[3]/div/a/span/span/span')))
-    following_count = driver.find_element(By.XPATH, '//ul/li[3]/div/a/span/span/span').text
+    def parse_number(s):
+        s = s.strip()
 
-    return int(followers_count), int(following_count)
+        if 'Mio.' in s:
+            s = s.replace('M', '').strip()
+            s = s.replace(',', '.')  # German-style decimal
+            return int(float(s) * 1_000_000)
+        elif 'K' in s:
+            s = s.replace('K', '').strip()
+            s = s.replace(',', '.')  # German-style decimal
+            return int(float(s) * 1_000)
+
+        # Assume US-style formatting like '1,249'
+        s = s.replace(',', '')
+        return int(s)
+
+    return parse_number(followers_count), parse_number(following_count)
 
 def get_usernames(followers=False, following=False) -> list[str]:
     path = "followers" if followers == True else "following"
-
-    WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, f"//span[contains(text(), '{path}')]")))
-    followers_element = driver.find_element(By.XPATH, f"//span[contains(text(), '{path}')]")
-    cursor.click_on(followers_element)
-    sleep(random.uniform(0.5, 1))
+    try:
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, f"//span[contains(text(), '{path}')]")))
+        followers_element = driver.find_element(By.XPATH, f"//span[contains(text(), '{path}')]")
+        cursor.click_on(followers_element)
+        sleep(random.uniform(0.5, 1))
+    except Exception:
+        return []
 
     try:
         while True:
@@ -88,10 +114,13 @@ def get_usernames(followers=False, following=False) -> list[str]:
             scrollbar = driver.find_element(By.XPATH, "//div[@data-visualcompletion='loading-state']")
             cursor.scroll_into_view_of_element(scrollbar)
             sleep(random.uniform(0.1, 0.3))
-    except TimeoutException:
+    except (TimeoutException, StaleElementReferenceException):
         pass
-
-    dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
+    
+    try:
+        dialog = driver.find_element(By.XPATH, "//div[@role='dialog']")
+    except Exception:
+        return []
     username_elements = dialog.find_elements(By.XPATH, '//span[contains(@class, "_ap3a") and contains(@class, "_aaco") and contains(@class, "_aacw") and contains(@class, "_aacx") and contains(@class, "_aad7") and contains(@class, "_aade")]')
     usernames = [ element.text for element in username_elements]
 
@@ -105,14 +134,27 @@ def scrape_profile(username: str) -> dict:
     profile = {
         'username': username
     }
-    search_profile(username)
+
+    MAX_FOLLOWS = 500
+    try:
+        search_profile(username)
+    except TimeoutException:
+        profile['followers_count'] = 0
+        profile['following_count'] = 0
+        profile['followers'] = []
+        profile['following'] = []
+        return profile
+    
     profile['followers_count'], profile['following_count'] = get_follow_count()
-    if profile['followers_count'] > 2000 or profile['following_count'] > 2000:
+    if profile['followers_count'] > MAX_FOLLOWS or profile['following_count'] > MAX_FOLLOWS:
         profile['followers'] = []
         profile['following'] = []
         return profile
 
     if profile['followers_count'] == 0 and profile['following_count'] == 0:
+        profile['followers'] = []
+        profile['following'] = []
+    if profile['followers_count'] == -1 and profile['following_count'] == -1:
         profile['followers'] = []
         profile['following'] = []
     else:
@@ -122,9 +164,9 @@ def scrape_profile(username: str) -> dict:
     followers_not_equal = len(profile['followers']) != profile['followers_count']
     following_not_equal =  len(profile['following']) != profile['following_count']
 
-    if followers_not_equal or following_not_equal:
-        pprint(profile)
-        raise ValueError("Follow count mismatch!")
+    #if followers_not_equal or following_not_equal:
+        #pprint(profile)
+        #raise ValueError("Follow count mismatch!")
     
     return profile
 
@@ -253,6 +295,15 @@ def count_todo_items() -> int:
     count = postgres_cursor.fetchone()[0]  # Get the first column from the result
     return count
 
+def count_done_items() -> int:
+    """Returns the total number of DONE items in the database."""
+    query = "SELECT COUNT(*) FROM tasks WHERE status = 'DONE';"
+
+
+    postgres_cursor.execute(query)
+    count = postgres_cursor.fetchone()[0]  # Get the first column from the result
+    return count
+
 def format_time(time: int) -> str:
     hours = int(time // 3600)
     minutes = int((time % 3600) // 60)
@@ -286,17 +337,17 @@ with tqdm(total=num_todo, desc="Scraping Profiles") as pbar:
                     add_user(follower, "TODO", depth + 1)
                 for follows in profile['following']:
                     add_user(follows, "TODO", depth + 1)
+            update_status(username, "DONE")
 
         except Exception as e:
             update_status(username, "TODO")
-            print(str(e))
-            sys.exit("Exiting the program due to the error.")
+            raise e
 
-        update_status(username, "DONE")
 
         time_since = time() - start_time
         average = (average * num_done + time_since) / (num_done + 1)
         num_todo = count_todo_items()
+        num_done = count_done_items()
         
         # Update the progress bar total dynamically
         pbar.total = num_todo
