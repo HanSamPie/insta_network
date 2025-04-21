@@ -83,7 +83,7 @@ def get_follow_count() -> tuple[int, int]:
     def parse_number(s):
         s = s.strip()
 
-        if 'Mio.' in s:
+        if 'M' in s:
             s = s.replace('M', '').strip()
             s = s.replace(',', '.')  # German-style decimal
             return int(float(s) * 1_000_000)
