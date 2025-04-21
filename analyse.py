@@ -47,17 +47,22 @@ print(f"Edges: {G.number_of_edges()}")
 degrees = [deg for _, deg in G.degree()]
 print(f"Average degree: {sum(degrees) / len(degrees):.2f}" if degrees else "No nodes to calculate degree.")
 
-nx.write_gexf(G, "graph/graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
+nx.write_graphml(G, "graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
 
+def condensed_graph(G):
+    G_copy = G.copy()  # Makes a shallow copy of the graph structure and attributes
 
-nodes_to_remove = [
-    node for node in G.nodes()
-    if G.in_degree(node) + G.out_degree(node) == 1
-]
+    nodes_to_remove = [
+        node for node in G_copy.nodes()
+        if G_copy.in_degree(node) + G_copy.out_degree(node) == 1
+    ]
 
-G.remove_nodes_from(nodes_to_remove)
+    G_copy.remove_nodes_from(nodes_to_remove)
+    return G_copy
 
-nx.write_gexf(G, "graph/condensed_graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
+condensed = condensed_graph(G)
+
+nx.write_graphml(condensed, "condensed_graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
 # Done! Now G is your NetworkX graph.
 print(f"Graph type: {type(G)}")
 print(f"Nodes: {G.number_of_nodes()}")
@@ -85,3 +90,6 @@ def build_co_citation_network(G):
                 co_citation.add_edge(u, v, weight=1)
 
     return co_citation
+
+co_citation_graph = build_co_citation_network(G)
+nx.write_graphml(co_citation_graph, "co_citation_graph.graphml")
