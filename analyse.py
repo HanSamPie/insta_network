@@ -1,3 +1,5 @@
+from collections import defaultdict
+from itertools import combinations
 from neo4j import GraphDatabase
 import networkx as nx
 
@@ -45,7 +47,7 @@ print(f"Edges: {G.number_of_edges()}")
 degrees = [deg for _, deg in G.degree()]
 print(f"Average degree: {sum(degrees) / len(degrees):.2f}" if degrees else "No nodes to calculate degree.")
 
-nx.write_gexf(G, "graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
+nx.write_gexf(G, "graph/graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
 
 
 nodes_to_remove = [
@@ -55,7 +57,7 @@ nodes_to_remove = [
 
 G.remove_nodes_from(nodes_to_remove)
 
-nx.write_gexf(G, "condensed_graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
+nx.write_gexf(G, "graph/condensed_graph.gexf")  # or nx.write_graphml(G, "graph.graphml")
 # Done! Now G is your NetworkX graph.
 print(f"Graph type: {type(G)}")
 print(f"Nodes: {G.number_of_nodes()}")
@@ -64,3 +66,22 @@ print(f"Edges: {G.number_of_edges()}")
 # Optional: check degree statistics
 degrees = [deg for _, deg in G.degree()]
 print(f"Average degree: {sum(degrees) / len(degrees):.2f}" if degrees else "No nodes to calculate degree.")
+
+def build_co_citation_network(G):
+    co_citation = nx.Graph()  # undirected
+
+    # For every node, get all the nodes it points to
+    citations_by_source = defaultdict(list)
+
+    for source, target in G.edges():
+        citations_by_source[source].append(target)
+
+    # For each source node, look at all pairs of citations it made
+    for cited_nodes in citations_by_source.values():
+        for u, v in combinations(set(cited_nodes), 2):  # remove dupes
+            if co_citation.has_edge(u, v):
+                co_citation[u][v]["weight"] += 1
+            else:
+                co_citation.add_edge(u, v, weight=1)
+
+    return co_citation
