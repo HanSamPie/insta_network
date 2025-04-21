@@ -39,7 +39,7 @@ with driver.session() as session:
     G = session.execute_read(load_graph)
 
 # Done! Now G is your NetworkX graph.
-print(f"Graph type: {type(G)}")
+print("Graph type: Raw \n")
 print(f"Nodes: {G.number_of_nodes()}")
 print(f"Edges: {G.number_of_edges()}")
 
@@ -47,7 +47,7 @@ print(f"Edges: {G.number_of_edges()}")
 degrees = [deg for _, deg in G.degree()]
 print(f"Average degree: {sum(degrees) / len(degrees):.2f}" if degrees else "No nodes to calculate degree.")
 
-nx.write_graphml(G, "graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
+nx.write_graphml(G, "graph/graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
 
 def condensed_graph(G):
     G_copy = G.copy()  # Makes a shallow copy of the graph structure and attributes
@@ -62,9 +62,9 @@ def condensed_graph(G):
 
 condensed = condensed_graph(G)
 
-nx.write_graphml(condensed, "condensed_graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
+nx.write_graphml(condensed, "graph/condensed_graph.graphml")  # or nx.write_graphml(G, "graph.graphml")
 # Done! Now G is your NetworkX graph.
-print(f"Graph type: {type(G)}")
+print("Graph type: Condensed \n")
 print(f"Nodes: {G.number_of_nodes()}")
 print(f"Edges: {G.number_of_edges()}")
 
@@ -92,4 +92,7 @@ def build_co_citation_network(G):
     return co_citation
 
 co_citation_graph = build_co_citation_network(G)
-nx.write_graphml(co_citation_graph, "co_citation_graph.graphml")
+nx.write_graphml(co_citation_graph, "graph/co_citation_graph.graphml")
+print("Graph type: Co-Citation \n")
+print(f"Nodes: {G.number_of_nodes()}")
+print(f"Edges: {G.number_of_edges()}")
